@@ -1,13 +1,13 @@
 mod schema;
 
-use boa_engine::{js_str, js_string};
+use boa_engine::{js_str, js_string, NativeFunction};
 use chrono::NaiveDateTime;
 use icalendar::{Component, EventLike, EventStatus};
 
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let response = reqwest::get("https://www.kent.ac.uk/whats-on").await?;
+    let response = reqwest::get("https://student.kent.ac.uk/events").await?;
     let body = response.text().await?;
     
     let mut context = boa_engine::Context::default();
@@ -32,6 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Err(e) => {
                 // Pretty print the error
+                eprintln!("{}", element.text().collect::<String>());
                 eprintln!("Uncaught {e}");
             }
         };
@@ -53,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .ends(NaiveDateTime::parse_from_str(&event.end, "%Y-%m-%d %H:%M:%S").unwrap())
             .location(&event.location)
             // .url(&event.url)
-            .url(&(data.assets_base_url.to_owned() + "/" + &event.id.to_string() + "/" + &event.slug))
+            .url(&(data.events_base_url.to_owned() + "/" + &event.id.to_string() + "/" + &event.slug))
             .uid(&event.id.to_string());
             // .all_day(event.all_day)
         if event.tentative {

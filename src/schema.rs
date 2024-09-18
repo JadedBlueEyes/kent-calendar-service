@@ -36,7 +36,7 @@ pub enum EventCampus {
     Medway,
 }
 
-type EventTags = HashMap<String, String>;
+pub type EventTags = HashMap<String, String>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
@@ -151,21 +151,7 @@ pub struct PrimaryCalendar {
     pub(crate) slug: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ContactPhone {
-    #[serde(rename = "")]
-    Empty,
-    #[serde(rename = "01227764000")]
-    The01227764000,
-    #[serde(rename = "01227 827335")]
-    The01227827335,
-    #[serde(rename = "07545871087")]
-    The07545871087,
-    #[serde(rename = "07858872728")]
-    The07858872728,
-    #[serde(rename = "07921858319")]
-    The07921858319,
-}
+pub type ContactPhone = String;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Country {
@@ -199,32 +185,9 @@ pub struct Image {
     pub(crate) width: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum SeriesSlug {
-    #[serde(rename = "all-levels")]
-    AllLevels,
-    #[serde(rename = "campus-tours")]
-    CampusTours,
-    #[serde(rename = "")]
-    Empty,
-    Icss,
-    Kentcog,
-}
+pub type SeriesSlug = String;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SeriesTitle {
-    #[serde(rename = "(All levels)")]
-    AllLevels,
-    #[serde(rename = "Campus Tours")]
-    CampusTours,
-    #[serde(rename = "")]
-    Empty,
-    #[serde(rename = "iCSS")]
-    ICss,
-    #[serde(rename = "KentCOG")]
-    KentCog,
-}
+pub type SeriesTitle = String;
 
 
 
@@ -259,19 +222,7 @@ pub struct Img {
     pub(crate) updated_at: String,
     pub(crate) updated_by: i64,
     pub(crate) url: String,
-    pub(crate) variants: Variants,
+    pub(crate) variants: String,
     pub(crate) width: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Variants {
-    #[serde(rename = "400x400")]
-    pub(crate) the_400_x400: String,
-    pub(crate) base64: String,
-    #[serde(rename = "base64inline")]
-    pub(crate) base64_inline: String,
-    #[serde(rename = "base64square")]
-    pub(crate) base64_square: String,
-    #[serde(rename = "base64video")]
-    pub(crate) base64_video: String,
-}
