@@ -13,7 +13,7 @@
 
 use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Data {
@@ -25,8 +25,6 @@ pub struct Data {
     pub(crate) events: Vec<Event>,
     pub(crate) events_base_url: String,
 }
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EventCampus {
@@ -189,8 +187,6 @@ pub type SeriesSlug = String;
 
 pub type SeriesTitle = String;
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Breakpoints {
     pub(crate) lg: i64,
@@ -200,7 +196,6 @@ pub struct Breakpoints {
     pub(crate) xxl: i64,
     pub(crate) xxxl: i64,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Img {
@@ -225,4 +220,3 @@ pub struct Img {
     pub(crate) variants: String,
     pub(crate) width: i64,
 }
-
