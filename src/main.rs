@@ -1,17 +1,122 @@
-mod schema;
+mod kent_schema;
+mod sums_pluto_schema;
 
 use boa_engine::{js_str, js_string};
-use chrono::NaiveDateTime;
-use icalendar::{Component, EventLike, EventStatus};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use icalendar::{Calendar, Component, EventLike, EventStatus};
+use reqwest::Url;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let response = reqwest::get("https://student.kent.ac.uk/events").await?;
+async fn main() -> Result<(), anyhow::Error> {
+    // let calendar = kent_calendar("https://student.kent.ac.uk/events").await?;
+    // calendar.print()?;
+    let calendar = sums_calendar(
+        "UutZYcRjdM5RzX2mnC8zPR",
+        "Kent SU Calendar",
+        "Hello Kent",
+        |e| format!("https://hellokent.co.uk/events/id/{}", e.id),
+    )
+    .await?;
+    calendar.print()?;
+    Ok(())
+}
+
+async fn sums_calendar<T: Fn(&sums_pluto_schema::Event) -> String>(
+    site_id: &str,
+    title: &str,
+    description: &str,
+    url_formatter: T,
+) -> Result<Calendar, anyhow::Error> {
+    let mut calendar = icalendar::Calendar::new();
+    calendar
+        .name(title)
+        .description(description)
+        .timezone("Europe/London");
+
+    let mut url = Url::parse_with_params(
+        "https://pluto.sums.su/api/events",
+        &[
+            ("perPage", "4"),
+            ("sortBy", "start_date"),
+            ("futureOrOngoing", "0"),
+            ("onlyPremium", "1"),
+        ],
+    )?;
+
+    let client = reqwest::Client::new();
+    loop {
+        let response = dbg!(
+            client
+                .get(url.clone())
+                .header("X-Site-Id", site_id)
+                .send()
+                .await?
+        )
+        .json::<sums_pluto_schema::Page>()
+        .await?;
+        eprintln!("{:?}", response);
+        for event in response.data {
+            let mut cal_event = icalendar::Event::new();
+            cal_event
+                .summary(&event.title)
+                .description(&event.description)
+                .starts(
+                    DateTime::parse_from_rfc3339(&event.start_date)
+                        .unwrap()
+                        .with_timezone(&Utc),
+                )
+                .ends(
+                    DateTime::parse_from_rfc3339(&event.end_date)
+                        .unwrap()
+                        .with_timezone(&Utc),
+                )
+                .url(&url_formatter(&event))
+                .uid(&event.id.to_string());
+
+            if let Some(venue) = event.venue {
+                cal_event.location(&venue.name);
+            }
+            calendar.push(cal_event.done());
+        }
+        match response.next_page_url {
+            Some(next_url) => url = next_url.parse()?,
+            None => break,
+        }
+    }
+
+    Ok(calendar)
+}
+
+async fn kent_calendar(url: &str) -> Result<Calendar, anyhow::Error> {
+    let response = reqwest::get(url).await?;
     let body = response.text().await?;
 
     let mut context = boa_engine::Context::default();
 
     let document = scraper::Html::parse_document(&body);
+    let description_selector =
+        scraper::Selector::parse("head > meta[name=\"description\"]").unwrap();
+    let title_selector = scraper::Selector::parse("head > title").unwrap();
+    let description = document
+        .select(&description_selector)
+        .next()
+        .unwrap()
+        .value()
+        .attr("content")
+        .unwrap();
+    let title = document
+        .select(&title_selector)
+        .next()
+        .unwrap()
+        .text()
+        .collect::<String>();
+
+    let mut calendar = icalendar::Calendar::new();
+    calendar
+        .name(&title)
+        .description(description)
+        .timezone("Europe/London");
+
     let script_selector = scraper::Selector::parse("script").unwrap();
     let script_elements = document.select(&script_selector);
     context
@@ -23,30 +128,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             &mut context,
         )
         .unwrap();
-    for element in script_elements.filter(|e| e.text().next().is_some()) {
+
+    for element in script_elements {
         // println!("{:?}", element);
         // println!("{}", element.text().collect::<String>());
-        match context.eval(boa_engine::Source::from_bytes(
-            &element.text().collect::<String>(),
-        )) {
-            Ok(_) => {
-                // let res_str = res.to_string(&mut context).unwrap().to_std_string_escaped();
-                // println!(
-                //     "{}",
-                //     res_str
-                // );
-                // if res_str != "undefined" {
-                // res.to_json(&mut context).ok().inspect(|json| println!("{}", json));
-                // }
-            }
-            Err(e) => {
-                // Pretty print the error
+        let _ = context
+            .eval(boa_engine::Source::from_bytes(
+                &element.text().collect::<String>(),
+            ))
+            .inspect_err(|e| {
                 eprintln!("{}", element.text().collect::<String>());
                 eprintln!("Uncaught {e}");
-            }
-        };
+            });
     }
-    let data: schema::Data = serde_json::from_value(
+    let data: kent_schema::Data = serde_json::from_value(
         context
             .global_object()
             .get(js_str!("KENT"), &mut context)
@@ -54,12 +149,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .to_json(&mut context)
             .unwrap(),
     )?;
+
     eprintln!("{:?}", data);
-    let mut my_calendar = icalendar::Calendar::new();
-    my_calendar
-        .name("Kent Calendar")
-        .description("Kent Calendar")
-        .timezone("Europe/London");
+
     for event in data.events {
         let mut cal_event = icalendar::Event::new();
         cal_event
@@ -82,9 +174,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             cal_event.status(EventStatus::Tentative);
         }
 
-        my_calendar.push(cal_event.done());
+        calendar.push(cal_event.done());
     }
-    my_calendar.print()?;
 
-    Ok(())
+    Ok(calendar)
 }
