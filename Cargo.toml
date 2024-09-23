@@ -5,11 +5,22 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.89"
+axum = "0.7.6"
 boa_engine = { version = "0.19.1", features = ["deser"] }
 chrono = "0.4.38"
+git-testament = "0.2.5"
+http = "1.1.0"
 icalendar = "0.16.8"
+listenfd = "1.0.1"
+mime = "0.3.17"
+moka = { version = "0.12.8", features = ["future"] }
 reqwest = { version = "0.12.7", features = ["json"] }
+rust-embed = "8.5.0"
 scraper = "0.20.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 tokio = { version = "1.40.0", features = ["full", "macros"] }
+tower = { version = "0.5.1", features = ["util", "load-shed", "limit", "timeout"] }
+tower-http = { version = "0.6.1", features = ["timeout", "trace"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

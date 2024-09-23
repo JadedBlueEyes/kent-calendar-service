@@ -20,9 +20,9 @@ pub(crate) async fn sums_calendar<T: Fn(&sums_pluto_schema::Event) -> String>(
     let mut url = Url::parse_with_params(
         "https://pluto.sums.su/api/events",
         &[
-            ("perPage", "4"),
+            ("perPage", "40"),
             ("sortBy", "start_date"),
-            ("futureOrOngoing", "0"),
+            ("futureOrOngoing", "1"),
             ("onlyPremium", "1"),
         ],
     )?;
@@ -38,7 +38,7 @@ pub(crate) async fn sums_calendar<T: Fn(&sums_pluto_schema::Event) -> String>(
         )
         .json::<sums_pluto_schema::Page>()
         .await?;
-        eprintln!("{:?}", response);
+
         for event in response.data {
             let mut cal_event = icalendar::Event::new();
             cal_event
@@ -134,7 +134,6 @@ pub(crate) async fn kent_calendar(url: &str) -> Result<Calendar, anyhow::Error> 
             .unwrap(),
     )?;
 
-    eprintln!("{:?}", data);
 
     for event in data.events {
         let mut cal_event = icalendar::Event::new();
