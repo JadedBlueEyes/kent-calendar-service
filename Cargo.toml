@@ -19,7 +19,7 @@ rust-embed = "8.5.0"
 scraper = "0.20.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
-tokio = { version = "1.40.0", features = ["full", "macros"] }
+tokio = { version = "1.43.1", features = ["full", "macros"] }
 tower = { version = "0.5.1", features = ["util", "load-shed", "limit", "timeout"] }
 tower-http = { version = "0.6.1", features = ["timeout", "trace"] }
 tracing = "0.1.40"
